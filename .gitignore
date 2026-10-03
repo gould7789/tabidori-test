@@ -1,0 +1,11 @@
+# API 키 — 절대 커밋 금지
+.env
+
+# 파이썬
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# macOS
+.DS_Store

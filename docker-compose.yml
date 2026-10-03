@@ -1,0 +1,26 @@
+# 9교시: PostgreSQL만 컨테이너로 띄운다 (웹 서버는 아직 맥에서 직접 uvicorn으로).
+# 11교시에 웹 서버·워커도 서비스로 추가할 예정.
+#
+#   docker compose up -d      시작 (백그라운드)
+#   docker compose ps         상태 확인
+#   docker compose down       중지 (데이터는 볼륨에 남음)
+#   docker compose down -v    중지 + 데이터까지 삭제
+services:
+  db:
+    image: postgres:16
+    environment:
+      # 로컬 개발 전용 계정. 외부에 공개하는 서버에선 이런 고정 비밀번호를 쓰지 않는다.
+      POSTGRES_USER: tabidori
+      POSTGRES_PASSWORD: tabidori
+      POSTGRES_DB: tabidori
+    ports:
+      - "5432:5432"            # 맥의 5432번 포트 → 컨테이너의 5432번 포트
+    volumes:
+      - pgdata:/var/lib/postgresql/data   # 컨테이너를 지워도 데이터가 남는 저장 공간
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tabidori"]
+      interval: 2s
+      retries: 15
+
+volumes:
+  pgdata:

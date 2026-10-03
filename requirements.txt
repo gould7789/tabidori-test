@@ -1,0 +1,12 @@
+# 9교시 기준 (학습 환경에서 확인한 버전)
+fastapi==0.142.2
+uvicorn==0.46.0
+httpx==0.28.1
+jinja2==3.1.6
+python-multipart==0.0.26   # FastAPI가 폼(Form) 데이터를 읽을 때 필요
+python-dotenv==1.2.2
+langgraph==1.2.12
+langchain-core==1.6.6
+langchain-anthropic==1.7.5
+langgraph-checkpoint-postgres==3.1.2
+psycopg[binary,pool]==3.3.6

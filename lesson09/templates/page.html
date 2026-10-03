@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>타비도리 프로토타입 · 9교시</title>
+  <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+  <style>
+    body { margin: 0; font-family: -apple-system, "Apple SD Gothic Neo", sans-serif; background: #f5f4f0; color: #1d1e1a; }
+    header { padding: 14px 20px; background: #fff; border-bottom: 1px solid #ddd; font-weight: 700; }
+    header small { font-weight: 400; color: #777; margin-left: 8px; }
+    #main { display: grid; grid-template-columns: 1fr 260px; gap: 16px; max-width: 960px; margin: 16px auto; padding: 0 16px; }
+    .chat { background: #fff; border: 1px solid #ddd; border-radius: 10px; padding: 14px; min-height: 360px; display: flex; flex-direction: column; gap: 8px; }
+    .bubble { max-width: 80%; padding: 8px 12px; border-radius: 10px; line-height: 1.5; font-size: 14px; }
+    .user { align-self: flex-end; background: #1d1e1a; color: #fff; }
+    .ai { align-self: flex-start; background: #e8ecff; }
+    .hint { color: #888; font-size: 13px; }
+    .card { border: 1.5px solid #c9761f; background: #fff8ef; border-radius: 10px; padding: 10px 12px; font-size: 14px; }
+    .card label { display: block; padding: 3px 0; }
+    .closed { color: #a32d2d; font-size: 12px; margin-left: 6px; }
+    .tray { background: #fff; border: 1px solid #ddd; border-radius: 10px; padding: 14px; font-size: 14px; align-self: start; }
+    .tray ol { padding-left: 20px; margin: 8px 0; }
+    form.input { grid-column: 1 / -1; display: flex; gap: 8px; }
+    form.input input { flex: 1; padding: 10px; border: 1px solid #bbb; border-radius: 8px; font-size: 14px; }
+    button { padding: 8px 14px; border-radius: 8px; border: 1px solid #1d1e1a; background: #1d1e1a; color: #fff; cursor: pointer; }
+    button.ghost { background: #fff; color: #1d1e1a; }
+    button:disabled, input:disabled { opacity: .45; cursor: not-allowed; }
+    .htmx-indicator { display: none; color: #777; font-size: 13px; }
+    .htmx-request .htmx-indicator, .htmx-request.htmx-indicator { display: inline; }
+    .err { color: #a32d2d; font-size: 13px; }
+    footer { grid-column: 1 / -1; color: #999; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <header>타비도리 프로토타입 <small>9교시 — 채팅 그래프 + PostgreSQL 체크포인트</small></header>
+  {% include "_main.html" %}
+</body>
+</html>

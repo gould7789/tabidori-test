@@ -144,8 +144,8 @@ HELP = ("테스트용 모델이라 이런 문장만 알아들어요: '노을 보
         "'금각사 빼줘' · '청수사 맨 앞으로' · '방금 거 취소'")
 
 
-def call(name, **args):
-    return AIMessage("", tool_calls=[{"name": name, "args": args, "id": "call_" + uuid.uuid4().hex[:8]}])
+def call(tool_name, **args):
+    return AIMessage("", tool_calls=[{"name": tool_name, "args": args, "id": "call_" + uuid.uuid4().hex[:8]}])
 
 
 class RuleModel:

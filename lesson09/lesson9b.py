@@ -1,7 +1,7 @@
 """9교시 후반 — 채팅 그래프를 웹 서버에 붙이고, 체크포인터를 PostgreSQL로
 
 실행 순서 (README 참고)
-  1) docker compose up -d                       ← 프로토타입 폴더 맨 위에서. PostgreSQL 컨테이너 시작
+  1) docker compose up -d db                    ← proto 폴더 맨 위에서. PostgreSQL 컨테이너만 시작
   2) cd lesson09 && uvicorn lesson9b:app        ← 웹 서버
   3) 브라우저 http://127.0.0.1:8000
 

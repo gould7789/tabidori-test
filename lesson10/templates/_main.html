@@ -1,0 +1,66 @@
+{# 서버가 매 요청마다 이 조각 전체를 새로 그려서 보냄 → htmx가 #main을 통째로 갈아 끼움 #}
+<div id="main">
+  <section class="chat">
+    {% if not bubbles %}
+      <p class="hint">예시: (트레이는 ⠿를 끌어서 순서 변경) 니시키랑 은각사 넣어줘 · 은각사 빼줘 · 청수사 맨 앞으로 · 은각사 빼고 니시키 맨 앞으로 · 방금 거 취소 · 노을 보기 좋은 데 있을까?</p>
+    {% endif %}
+    {% for b in bubbles %}
+      <div class="bubble {{ b.who }}">{{ b.text }}</div>
+    {% endfor %}
+
+    {% if pending %}
+      {# ⏸️ 그래프가 add_spots 안에서 멈춘 상태 — 답하면 /answer로 재개 #}
+      <form class="card" hx-post="/plans/{{ plan_id }}/answer" hx-target="#main" hx-swap="outerHTML"
+            hx-disabled-elt="find button">
+        <b>{{ "이 곳들 말씀하시는 걸까요?" if pending.type == "spot_confirm" else "이런 곳은 어떠세요? 골라 주세요" }}</b>
+        {% for c in pending.cards %}
+          <label>
+            <input type="checkbox" name="selected" value="{{ c.name }}" {{ "checked" if c.checked }}>
+            {{ c.name }}{% if c.closed %}<span class="closed">🚫 {{ pending.date }} 휴무</span>{% endif %}
+          </label>
+        {% endfor %}
+        <button>선택한 곳 담기</button>
+        <span class="htmx-indicator">처리 중…</span>
+      </form>
+    {% endif %}
+    {% if error %}<p class="err">{{ error }}</p>{% endif %}
+  </section>
+
+  <aside class="tray">
+    <b>트레이</b> <span class="hint">{{ date }}</span>
+    {# ⠿ 손잡이로 드래그 → 놓는 순간(end) 폼의 hidden input들이 새 순서대로 /reorder에 전송됨 (htmx 공식 sortable 예제 방식)
+       카드 대기 중엔 sortable 클래스를 빼서 드래그 자체를 끔 (서버도 409) #}
+    <form class="{{ 'sortable' if not pending }} traylist" hx-post="/plans/{{ plan_id }}/reorder" hx-trigger="end"
+          hx-target="#main" hx-swap="outerHTML">
+      {% for s in tray %}
+        <div class="item">
+          <span class="handle" title="끌어서 순서 변경">⠿</span>
+          <input type="hidden" name="order" value="{{ s }}">
+          <span class="num">{{ loop.index }}</span>
+          <span class="spot">{{ s }}</span>
+          {# ✕ = 빼기. 폼 안의 버튼이라 type="button"으로 폼 제출을 막고, htmx가 /edit로 따로 보냄 #}
+          <button type="button" class="mini" title="빼기" {{ "disabled" if pending }}
+                  hx-post="/plans/{{ plan_id }}/edit" hx-vals='{{ {"action": "remove", "spot": s} | tojson }}'
+                  hx-target="#main" hx-swap="outerHTML">✕</button>
+        </div>
+      {% endfor %}
+    </form>
+    {% if can_undo %}
+      <button class="ghost undo" hx-post="/plans/{{ plan_id }}/undo" hx-target="#main" hx-swap="outerHTML"
+              {{ "disabled" if pending }}>↶ 되돌리기</button>
+    {% endif %}
+    <button class="ghost" hx-post="/plans/{{ plan_id }}/reset" hx-target="#main" hx-swap="outerHTML"
+            hx-confirm="이 plan의 대화·트레이를 지울까요?">처음부터</button>
+  </aside>
+
+  {# 카드 대기 중이면 입력 잠금 (서버도 409로 막음 — 이중 잠금) #}
+  <form class="input" hx-post="/plans/{{ plan_id }}/chat" hx-target="#main" hx-swap="outerHTML"
+        hx-disabled-elt="find input, find button">
+    <input name="message" autocomplete="off" required
+           placeholder="{{ '위 카드에 먼저 답해 주세요' if pending else '메시지를 입력하세요' }}" {{ "disabled" if pending }}>
+    <button {{ "disabled" if pending }}>보내기</button>
+    <span class="htmx-indicator">답 기다리는 중…</span>
+  </form>
+
+  <footer>plan_id = thread_id = {{ plan_id }} · 이 응답을 만든 프로세스 PID {{ pid }}</footer>
+</div>

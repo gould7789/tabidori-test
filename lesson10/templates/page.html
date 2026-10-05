@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>타비도리 프로토타입 · 10교시</title>
+  <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.7/Sortable.min.js"></script>
+  <script>
+    // htmx 공식 sortable 예제 방식: 화면 조각이 새로 들어올 때마다(htmx.onLoad) .sortable에 드래그를 붙인다
+    htmx.onLoad(function (content) {
+      content.querySelectorAll(".sortable").forEach(function (el) {
+        new Sortable(el, {
+          handle: ".handle",                   // ⠿ 손잡이로만 끌기 (✕ 버튼 오작동 방지)
+          animation: 150,
+          ghostClass: "dragging",
+          onEnd: function () {
+            // Sortable이 놓는 순간 이 폼에 'end' 이벤트를 보냄 → hx-trigger="end"가 받아 /reorder로 전송
+            this.option("disabled", true);   // 전송 중 다시 끌기 금지 (응답이 오면 #main이 통째로 바뀜)
+          }
+        });
+      });
+    });
+
+    // 요청이 실패하면(서버 오류·404·409·연결 끊김) 화면이 서버와 달라질 수 있다.
+    // 예: 드래그는 화면에서 이미 순서를 바꿔 놓았는데 저장은 실패 → 화면만 바뀐 '가짜 순서'가 남음.
+    // → 실패를 알려 주고, 서버의 지금 상태로 #main을 다시 그린다 (드래그도 다시 켜짐).
+    function resync(msg) {
+      var t = document.getElementById("toast");
+      t.textContent = msg; t.hidden = false;
+      setTimeout(function () { t.hidden = true; }, 4000);
+      htmx.ajax("GET", location.pathname, { target: "#main", swap: "outerHTML", select: "#main" });
+    }
+    document.addEventListener("htmx:responseError", function (e) {
+      var detail = "";
+      try { detail = JSON.parse(e.detail.xhr.responseText).detail || ""; } catch (_) {}
+      resync("반영하지 못했어요 (" + e.detail.xhr.status + ") " + detail + " — 서버 기준으로 다시 불러왔어요");
+    });
+    document.addEventListener("htmx:sendError", function () {
+      resync("서버에 연결하지 못했어요 — 다시 불러왔어요");
+    });
+  </script>
+  <style>
+    body { margin: 0; font-family: -apple-system, "Apple SD Gothic Neo", sans-serif; background: #f5f4f0; color: #1d1e1a; }
+    header { padding: 14px 20px; background: #fff; border-bottom: 1px solid #ddd; font-weight: 700; }
+    header small { font-weight: 400; color: #777; margin-left: 8px; }
+    #main { display: grid; grid-template-columns: 1fr 260px; gap: 16px; max-width: 960px; margin: 16px auto; padding: 0 16px; }
+    .chat { background: #fff; border: 1px solid #ddd; border-radius: 10px; padding: 14px; min-height: 360px; display: flex; flex-direction: column; gap: 8px; }
+    .bubble { max-width: 80%; padding: 8px 12px; border-radius: 10px; line-height: 1.5; font-size: 14px; }
+    .user { align-self: flex-end; background: #1d1e1a; color: #fff; }
+    .ai { align-self: flex-start; background: #e8ecff; }
+    .hint { color: #888; font-size: 13px; }
+    .card { border: 1.5px solid #c9761f; background: #fff8ef; border-radius: 10px; padding: 10px 12px; font-size: 14px; }
+    .card label { display: block; padding: 3px 0; }
+    .closed { color: #a32d2d; font-size: 12px; margin-left: 6px; }
+    .tray { background: #fff; border: 1px solid #ddd; border-radius: 10px; padding: 14px; font-size: 14px; align-self: start; }
+    .tray ol { padding-left: 20px; margin: 8px 0; }
+    .traylist { margin: 8px 0; }
+    .item { display: flex; align-items: center; gap: 6px; padding: 5px 4px; border-radius: 6px; }
+    .item:hover { background: #f5f4f0; }
+    .handle { cursor: grab; color: #999; user-select: none; }
+    .traylist:not(.sortable) .handle { visibility: hidden; }
+    .num { color: #999; font-size: 12px; width: 14px; }
+    .spot { flex: 1; }
+    .dragging { opacity: .4; }
+    .mini { padding: 1px 7px; font-size: 12px; margin-left: 4px; background: #fff; color: #1d1e1a; border-color: #bbb; }
+    .undo { display: block; margin: 6px 0 10px; }
+    form.input { grid-column: 1 / -1; display: flex; gap: 8px; }
+    form.input input { flex: 1; padding: 10px; border: 1px solid #bbb; border-radius: 8px; font-size: 14px; }
+    button { padding: 8px 14px; border-radius: 8px; border: 1px solid #1d1e1a; background: #1d1e1a; color: #fff; cursor: pointer; }
+    button.ghost { background: #fff; color: #1d1e1a; }
+    button:disabled, input:disabled { opacity: .45; cursor: not-allowed; }
+    .htmx-indicator { display: none; color: #777; font-size: 13px; }
+    .htmx-request .htmx-indicator, .htmx-request.htmx-indicator { display: inline; }
+    .err { color: #a32d2d; font-size: 13px; }
+    #toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: #a32d2d; color: #fff; padding: 10px 16px; border-radius: 8px; font-size: 13px; }
+    footer { grid-column: 1 / -1; color: #999; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <header>타비도리 프로토타입 <small>10교시 — 트레이는 tray_items 테이블, 되돌리기는 plans.undo_snapshot</small></header>
+  {% include "_main.html" %}
+  <div id="toast" hidden></div>
+</body>
+</html>

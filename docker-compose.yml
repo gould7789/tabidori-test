@@ -1,10 +1,11 @@
-# 9교시: PostgreSQL만 컨테이너로 띄운다 (웹 서버는 아직 맥에서 직접 uvicorn으로).
-# 11교시에 웹 서버·워커도 서비스로 추가할 예정.
+# 서비스 3개: 웹 서버 · 워커 · DB (11교시~)
 #
-#   docker compose up -d      시작 (백그라운드)
-#   docker compose ps         상태 확인
-#   docker compose down       중지 (데이터는 볼륨에 남음)
-#   docker compose down -v    중지 + 데이터까지 삭제
+#   docker compose up -d db           DB만 (웹 서버·워커를 맥에서 직접 띄울 때 — 9·10·11교시 실습)
+#   docker compose up --build         세 개 전부 컨테이너로 (코드를 고쳤으면 --build로 이미지 다시 만들기)
+#   docker compose up --build --scale worker=2    워커 2개
+#   docker compose ps                 상태 확인
+#   docker compose logs -f worker     워커 로그 보기
+#   docker compose down               중지 (데이터는 볼륨에 남음) / down -v 는 데이터까지 삭제
 services:
   db:
     image: postgres:18          # 최신 안정판(18.x). AWS RDS도 18 지원(2025-11~)
@@ -21,6 +22,30 @@ services:
       test: ["CMD-SHELL", "pg_isready -U tabidori"]
       interval: 2s
       retries: 15
+
+  web:                          # 웹 서버: 요청 처리 · 화면 · 채팅 그래프
+    build: .
+    command: uvicorn lesson11:app --host 0.0.0.0 --port 8000    # 컨테이너 밖(맥 브라우저)에서 들어오려면 0.0.0.0
+    environment:
+      DATABASE_URL: postgresql://tabidori:tabidori@db:5432/tabidori   # 컨테이너끼리는 서비스 이름(db)과 안쪽 포트(5432)로
+      FAKE_DELAY: ${FAKE_DELAY:-0.5}
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  worker:                       # 워커: 작업표에서 일을 꺼내 Loop A 실행. 요청을 받지 않으니 ports 없음
+    build: .
+    command: python worker.py
+    environment:
+      DATABASE_URL: postgresql://tabidori:tabidori@db:5432/tabidori
+      LOOPA_SECONDS: ${LOOPA_SECONDS:-5}
+      WORKER_CONCURRENCY: ${WORKER_CONCURRENCY:-2}
+      WORKER_STALE: ${WORKER_STALE:-60}
+    depends_on:
+      db:
+        condition: service_healthy
 
 volumes:
   pgdata18:

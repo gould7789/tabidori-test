@@ -7,20 +7,20 @@
 #   docker compose down -v    중지 + 데이터까지 삭제
 services:
   db:
-    image: postgres:16
+    image: postgres:18          # 최신 안정판(18.x). AWS RDS도 18 지원(2025-11~)
     environment:
       # 로컬 개발 전용 계정. 외부에 공개하는 서버에선 이런 고정 비밀번호를 쓰지 않는다.
       POSTGRES_USER: tabidori
       POSTGRES_PASSWORD: tabidori
       POSTGRES_DB: tabidori
     ports:
-      - "5432:5432"            # 맥의 5432번 포트 → 컨테이너의 5432번 포트
+      - "5433:5432"            # 맥의 5433번 포트 → 컨테이너의 5432번 포트 (맥에 이미 있는 PostgreSQL이 5432를 쓰고 있어서)
     volumes:
-      - pgdata:/var/lib/postgresql/data   # 컨테이너를 지워도 데이터가 남는 저장 공간
+      - pgdata18:/var/lib/postgresql      # 컨테이너를 지워도 데이터가 남는 저장 공간 (18부터 경로가 /var/lib/postgresql로 바뀜)
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U tabidori"]
       interval: 2s
       retries: 15
 
 volumes:
-  pgdata:
+  pgdata18:

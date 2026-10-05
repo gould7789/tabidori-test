@@ -28,7 +28,7 @@ from psycopg_pool import AsyncConnectionPool
 from tabidori_chat import FIRST_STATE, build_graph
 
 # 로컬 개발용 DB 주소 — docker-compose.yml과 같은 값. 실서비스에선 환경변수로만 넣는다.
-DB_URL = os.getenv("DATABASE_URL", "postgresql://tabidori:tabidori@localhost:5432/tabidori")
+DB_URL = os.getenv("DATABASE_URL", "postgresql://tabidori:tabidori@localhost:5433/tabidori")
 templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
 
 

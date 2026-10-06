@@ -31,6 +31,7 @@ services:
       FAKE_DELAY: ${FAKE_DELAY:-0.5}
     ports:
       - "8000:8000"
+    restart: unless-stopped     # 웹 서버가 죽으면 Docker가 자동으로 다시 켬
     depends_on:
       db:
         condition: service_healthy
@@ -42,7 +43,9 @@ services:
       DATABASE_URL: postgresql://tabidori:tabidori@db:5432/tabidori
       LOOPA_SECONDS: ${LOOPA_SECONDS:-5}
       WORKER_CONCURRENCY: ${WORKER_CONCURRENCY:-2}
-      WORKER_STALE: ${WORKER_STALE:-60}
+      WORKER_HEARTBEAT: ${WORKER_HEARTBEAT:-5}   # "나 살아 있음" 간격(초)
+      WORKER_DEAD: ${WORKER_DEAD:-15}             # 하트비트가 이만큼 끊기면 죽은 것으로 봄(초)
+    restart: unless-stopped     # 워커가 죽으면 Docker가 자동으로 다시 켬 (직접 docker compose stop 한 경우만 제외)
     depends_on:
       db:
         condition: service_healthy

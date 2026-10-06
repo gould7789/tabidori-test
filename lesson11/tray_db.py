@@ -55,12 +55,14 @@ CREATE TABLE IF NOT EXISTS loop_a_jobs (
     badge        text,                       -- 결과 배지 (완료일 때)
     attempts     int  NOT NULL DEFAULT 0,    -- 몇 번 꺼내 갔나 (중복 실행·재시도 확인용)
     worker       text,                       -- 지금(마지막으로) 맡은 워커
+    heartbeat_at timestamptz,                -- 맡은 워커의 마지막 "나 살아 있음" (실행 중일 때 몇 초마다 갱신)
     created_at   timestamptz NOT NULL DEFAULT now(),
     started_at   timestamptz,
     finished_at  timestamptz,
     UNIQUE (plan_id, spot, date)             -- 같은 스팟·같은 날짜는 한 번만 확인
 );
-CREATE INDEX IF NOT EXISTS loop_a_jobs_queued ON loop_a_jobs (id) WHERE status = 'queued'
+CREATE INDEX IF NOT EXISTS loop_a_jobs_queued ON loop_a_jobs (id) WHERE status = 'queued';
+ALTER TABLE loop_a_jobs ADD COLUMN IF NOT EXISTS heartbeat_at timestamptz
 """
 
 POOL = None                      # 웹 서버가 켜질 때 lifespan에서 넣어 줌 (set_pool)

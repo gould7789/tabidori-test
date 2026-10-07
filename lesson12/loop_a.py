@@ -4,18 +4,21 @@
 이번 교시의 목적은 '워커 + 작업표'가 제대로 도는지라서, 정해진 시간 동안 기다렸다가 정해진 배지를 돌려주는
 테스트용 그래프를 쓴다. 그래프 모양(스팟 하나 → 배지 하나, 체크포인터 없음)은 진짜와 같다.
 
-  LOOPA_SECONDS=5   한 스팟 확인에 걸리는 시간(초) 흉내. 기본 5초
+  LOOPA_SECONDS=5     한 스팟 확인에 걸리는 시간(초) 흉내. 기본 5초
+  LOOPA_SECONDS=real  10/6 맥 실측값(진짜 Loop A 5곳: 12.1·6.1·28.5·13.6·17.3초, 평균 15.5초) 중 하나를 매번 무작위로
   LOOPA_FAIL=錦市場  이 스팟은 일부러 오류를 낸다 (재시도·실패 실험용, 쉼표로 여러 개)
 """
 import asyncio
 import os
+import random
 from typing import TypedDict
 
 from langgraph.graph import END, START, StateGraph
 
 from tabidori_chat import CLOSED
 
-SECONDS = float(os.getenv("LOOPA_SECONDS", "5"))
+SECONDS = os.getenv("LOOPA_SECONDS", "5")
+MEASURED = [12.1, 6.1, 28.5, 13.6, 17.3]                  # 12교시 measure_loop_a.py 결과 (전부 Sonnet, 스팟당 1회)
 FAIL = set(filter(None, os.getenv("LOOPA_FAIL", "").split(",")))
 
 # 진짜 Loop A의 배지 표(lesson5_v2.BADGE)와 같은 문구
@@ -34,7 +37,8 @@ class LoopAState(TypedDict):
 
 
 async def check(state: LoopAState):
-    await asyncio.sleep(SECONDS)                          # ✅ await — 기다리는 동안 같은 워커가 다른 작업도 진행
+    secs = random.choice(MEASURED) if SECONDS == "real" else float(SECONDS)
+    await asyncio.sleep(secs)                             # ✅ await — 기다리는 동안 같은 워커가 다른 작업도 진행
     if state["spot"] in FAIL:
         raise RuntimeError(f"테스트용 오류: {state['spot']}")
     if (state["spot"], state["trip_date"]) in CLOSED:

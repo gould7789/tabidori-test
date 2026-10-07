@@ -2,7 +2,7 @@
 #
 #   docker compose up -d db           DB만 (웹 서버·워커를 맥에서 직접 띄울 때 — 9·10·11교시 실습)
 #   docker compose up --build         세 개 전부 컨테이너로 (코드를 고쳤으면 --build로 이미지 다시 만들기)
-#   docker compose up --build --scale worker=2    워커 2개
+#   (워커는 기본 2개 — 아래 worker의 deploy.replicas. 하나가 죽어도 다른 하나가 새 작업을 계속 처리)
 #   docker compose ps                 상태 확인
 #   docker compose logs -f worker     워커 로그 보기
 #   docker compose down               중지 (데이터는 볼륨에 남음) / down -v 는 데이터까지 삭제
@@ -42,10 +42,12 @@ services:
     environment:
       DATABASE_URL: postgresql://tabidori:tabidori@db:5432/tabidori
       LOOPA_SECONDS: ${LOOPA_SECONDS:-5}
-      WORKER_CONCURRENCY: ${WORKER_CONCURRENCY:-2}
+      WORKER_CONCURRENCY: ${WORKER_CONCURRENCY:-8}   # 워커 하나가 동시에 돌리는 Loop A 수 (12교시 결정: 2개 × 8 = 16자리)
       WORKER_HEARTBEAT: ${WORKER_HEARTBEAT:-5}   # "나 살아 있음" 간격(초)
       WORKER_DEAD: ${WORKER_DEAD:-15}             # 하트비트가 이만큼 끊기면 죽은 것으로 봄(초)
     restart: unless-stopped     # 워커가 죽으면 Docker가 자동으로 다시 켬 (직접 docker compose stop 한 경우만 제외)
+    deploy:
+      replicas: 2               # 워커 2개 (12교시 결정 — 근거는 개발설계노트 9-13절)
     depends_on:
       db:
         condition: service_healthy

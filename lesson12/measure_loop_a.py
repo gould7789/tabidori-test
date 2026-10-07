@@ -47,6 +47,7 @@ def cost_of(usage):
 
 
 rows = []
+tok_rows = []
 for spot, date, url, hours in SPOTS:
     print(f"=== {spot} ({date}) ===", flush=True)
     state = {"spot": spot, "trip_date": date, "url": url, "regular_hours": hours, "material": "", "evidence": "",
@@ -65,6 +66,10 @@ for spot, date, url, hours in SPOTS:
     cost = cost_of(final["usage"])
     rows.append((spot, total, cost, steps, la.badge_of(final)))
     print("  단계: " + " → ".join(f"{n} {s:.1f}초" for n, s in steps if s >= 0.05))
+    # 단계별 토큰 — 어디서 입력 토큰(=비용)이 나가는지
+    print("  토큰: " + " · ".join(f"{u['step']} 입력 {u['in']:,}/출력 {u['out']:,}" + (f"/검색 {u['searches']}회" if u['searches'] else "")
+                                  for u in final["usage"]))
+    tok_rows.extend(final["usage"])
     print(f"  배지: {la.badge_of(final)}   전체 {total:.1f}초   약 ${cost:.4f}\n", flush=True)
 
 times = [r[1] for r in rows]
@@ -77,3 +82,11 @@ for *_, steps, _ in rows:
     for n, s in steps:
         by_node.setdefault(n, []).append(s)
 print("  단계별 평균: " + ", ".join(f"{n} {statistics.mean(v):.1f}초({len(v)}회)" for n, v in by_node.items() if max(v) >= 0.05))
+by_step = {}
+for u in tok_rows:
+    by_step.setdefault(u["step"], []).append(u)
+print("  단계별 평균 토큰: " + ", ".join(
+    f"{k} 입력 {statistics.mean(x['in'] for x in v):,.0f}/출력 {statistics.mean(x['out'] for x in v):,.0f}({len(v)}회)"
+    for k, v in by_step.items()))
+total_in = sum(u["in"] for u in tok_rows)
+print(f"  스팟당 평균 입력 {total_in / len(rows):,.0f}토큰 · 출력 {sum(u['out'] for u in tok_rows) / len(rows):,.0f}토큰")

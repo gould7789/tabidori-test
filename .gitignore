@@ -9,3 +9,6 @@ venv/
 
 # macOS
 .DS_Store
+
+# 실험 로그
+experiment.log
